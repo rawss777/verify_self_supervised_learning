@@ -1,0 +1,13 @@
+name: SimCLR
+root: simclr
+
+params:
+  # projection params
+  proj_params:
+    num_layer: 2
+    hidden_dim: 512
+    output_dim: 128
+    hidden_bn: false
+    output_bn: false
+
+

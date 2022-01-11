@@ -1,0 +1,16 @@
+name: DeepClusterV2
+root: deepclusterv2
+
+params:
+  # projection params
+  proj_params:
+    num_layer: 2
+    hidden_dim: 512
+    output_dim: 128
+    hidden_bn: true
+    output_bn: true
+  num_prototype_list: [10, 20, 30]
+  prototype_schedule: [10, 80, 170, 250, 300]  # epoch
+  kmeans_params:
+    num_iter: 50
+

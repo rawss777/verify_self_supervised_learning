@@ -1,0 +1,5 @@
+name : InfoNCELoss
+root : info_nce_loss
+
+params:
+  t_scale: 0.07

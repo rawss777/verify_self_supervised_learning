@@ -1,0 +1,77 @@
+multi_view_list: [base, base]  # [query, key]
+
+views:
+    # augmentation sample https://pystyle.info/pytorch-list-of-transforms/#outline__6_9
+    #    """
+    #    MoCo-v1:[
+    #    random_resize_crop: always, scale=[0.2, 1.0]
+    #    color_jitter      : p=1.0, brightness=0.4, contrast=0.4, saturation=0.4, hue=0.4
+    #    gary_scale        : p=0.2
+    #    horizontal_flip   : p=0.5
+    #    ]
+    #    MoCo-v2:[
+    #    random_resize_crop: always, scale=[0.2, 1.0]
+    #    color_jitter      : p=0.8, brightness=0.4, contrast=0.4, saturation=0.4, hue=0.4
+    #    gaussian_blur     : p=0.5, sigma=[0.1, 0.2]
+    #    gary_scale        : p=0.2
+    #    horizontal_flip   : p=0.5
+    #    ]
+    #    """
+    base:  # query and key
+        random_resize_crop:
+            use: true
+            root: torchvision.transforms
+            name: RandomResizedCrop
+            params:
+                size : 32
+                scale: [0.5, 1.0]
+                ratio: [0.9, 1.1]
+
+        color_jitter:
+            use: true
+            root: util_augments
+            name: RandomColorJitter
+            params:
+                brightness: 0.4
+                contrast: 0.4
+                saturation: 0.4
+                hue: 0.4
+                p: 0.8
+
+        gary_scale:
+            use: true
+            root: torchvision.transforms
+            name: RandomGrayscale
+            params:
+                p: 0.5
+
+        gaussian_blur:
+            use: true
+            root: util_augments
+            name: RandomGaussianBlur
+            params:
+                sigma: [0.1, 0.2]
+                p: 0.2
+
+        horizontal_flip:
+            use: true
+            root: torchvision.transforms
+            name: RandomHorizontalFlip
+            params:
+                p: 0.5
+
+        # # # option augmentation
+        vatical_flip:
+            use: false
+            root: torchvision.transforms
+            name: RandomVerticalFlip
+            params:
+                p: 0.5
+
+        rotation:
+            use: false
+            root: torchvision.transforms
+            name: RandomRotation
+            params:
+                degrees: 90
+

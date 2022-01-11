@@ -1,0 +1,12 @@
+name : CrossEntropyLoss
+root : torch.nn
+
+params:
+  weight: null
+  size_average: null
+  ignore_index: -1
+  reduce: null
+  reduction: mean
+  label_smoothing: 0.
+
+

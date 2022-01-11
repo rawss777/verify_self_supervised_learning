@@ -1,0 +1,12 @@
+name              : stl10
+dataset_path      : dataset
+img_size          : 96
+input_channel     : 3
+num_classes       : 10
+normalize:
+    mean      : [0.44058638793146926, 0.4273111369910832, 0.38579501157407553]
+    std       : [0.2686545583839393, 0.2612521862515849, 0.26849920555418866]
+
+# Non common params
+unlabeled_to_train: true
+

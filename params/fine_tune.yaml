@@ -1,0 +1,42 @@
+# Training config ()
+defaults:
+  # cifar10
+  - dataset        : cifar10
+  # "sgd" or "adam" or "radam" or "lars"
+  - optimizer      : adam
+  # "cosine" or "multi_step" or "cosine_annealing" or "none"
+  - lr_sheduler    : cosine
+  # "base"
+  - augmentation   : base
+  # "cross_entropy_loss"
+  - loss_fn        : cross_entropy_loss
+
+experiment_params:
+  debug_mode       : true
+  output_dir       : output/cifar10
+  pretrain_run_name:
+  run_name         :
+
+fine_tune_params:
+  # common params
+  model_state  :
+  fix_encoder  : true
+  gpu_id       : 0
+  multi_cpu_num: 32
+  epoch_num    : 100
+  batch_size   : 512
+  use_amp      : true
+
+  log_interval:
+    train      : 1         # epoch
+    validation : 1         # epoch
+    checkpoints: 50        # epoch
+
+  resume:               # 学習を再開したい場合は，下記を指定
+    use        : false  # falseの場合は再開しない
+    run_name   :        # 再開したいtrain/run_nameを指定(default: None)
+    checkpoints:        # epochを指定する(default: None)
+
+hydra:
+  run:
+    dir: ./${experiment_params.output_dir}/hydra

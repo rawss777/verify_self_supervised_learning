@@ -1,0 +1,23 @@
+name: MoCo
+root: moco
+
+params:
+  # projection params
+  proj_params:
+    num_layer: 2
+    hidden_dim: 512
+    output_dim: 128
+    hidden_bn: false
+    output_bn: false
+  # momentum
+  m_factor: 0.99
+  # memory queue
+  memory_queue_params:
+    memory_size: 65536
+    dequeue_size: 4096
+  # batch norm to split batch norm
+  split_bn:
+    use: false
+    num_split: 16
+  # EMA to EMAN
+  use_eman: false

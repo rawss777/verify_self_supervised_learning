@@ -1,0 +1,33 @@
+name: ResNetEncoder
+root: resnet
+variant: resnet18
+
+params:
+  wide_scale: 1
+  drop_rate: 0.
+  se: false
+
+resnet10:
+  block: BasicBlock
+  num_blocks: [1, 1, 1, 1]
+
+resnet18:
+  block: BasicBlock
+  num_blocks: [2, 2, 2, 2]
+
+resnet34:
+  block: BasicBlock
+  num_blocks: [3, 4, 6, 3]
+
+resnet50:
+  block: Bottleneck
+  num_blocks: [3, 4, 6, 3]
+
+resnet101:
+  block: Bottleneck
+  num_blocks: [3, 4, 23, 3]
+
+resnet152:
+  block: Bottleneck
+  num_blocks: [3, 8, 36, 3]
+

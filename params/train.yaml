@@ -1,0 +1,43 @@
+# Training config ()
+defaults:
+  # "cifar10" or "stl10"
+  - dataset        : cifar10
+  # "sgd" or "adam" or "radam" or "lars"
+  - optimizer      : adam
+  # "cosine" or "multi_step" or "cosine_annealing" or "none"
+  - lr_sheduler    : cosine
+  # "resnet" or "sk_resnet"
+  - encoder        : resnet
+  # "moco" or "simclr" or "swav" or "byol" or "simsiam" or "deepclusterv2"
+  - self_supervised: deepclusterv2
+  - augmentation   : deepclusterv2
+  # "info_nce_loss" or "soft_cross_entropy_loss" or "with_temp_cross_entropy_loss" or "cosine_similarity_loss"
+  - loss_fn        : cross_entropy_loss
+
+experiment_params:
+  debug_mode: true
+  run_name  :
+  seed      : 0              # (default: None)
+  output_dir: output/cifar10
+
+train_params:
+  # common params
+  gpu_id       : 0
+  multi_cpu_num: 32
+  epoch_num    : 300
+  batch_size   : 512
+  use_amp      : true
+
+  log_interval:
+    train      : 1    # epoch
+    validation : 50   # epoch
+    checkpoints: 100  # epoch
+
+  resume:               # 学習を再開したい場合は，下記を指定
+    use        : false  # falseの場合は再開しない
+    run_name   :        # 再開したいtrain/run_nameを指定(default: None)
+    checkpoints:        # epochを指定する(default: None)
+
+hydra:
+  run:
+    dir: ./${experiment_params.output_dir}/hydra

@@ -1,0 +1,10 @@
+name                : CosineAnnealingWarmupRestarts
+root                : cosine_scheduler
+params:
+  first_cycle_steps : 45
+  cycle_mult        : 2
+  max_lr            : 1.0
+  min_lr            : 0.001
+  warmup_steps      : 5
+  gamma             : 0.35
+  last_epoch        : -1

@@ -1,0 +1,13 @@
+name : WithTempCrossEntropyLoss
+root : cross_entropy_loss
+
+params:
+  t_scale: 1.
+  weight: null
+  size_average: null
+  ignore_index: -1
+  reduce: null
+  reduction: mean
+  label_smoothing: 0.
+
+

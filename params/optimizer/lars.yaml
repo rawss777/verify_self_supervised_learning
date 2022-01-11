@@ -1,0 +1,10 @@
+name : LARS
+root : lars
+params:
+  lr          : 0.05
+  momentum    : 0.9
+  weight_decay: 1e-4
+  eta         : 0.001
+
+
+

@@ -1,0 +1,5 @@
+name : SoftCrossEntropyLoss
+root : cross_entropy_loss
+
+params:
+  t_scale: 0.07

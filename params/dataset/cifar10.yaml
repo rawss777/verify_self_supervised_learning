@@ -1,0 +1,13 @@
+name          : cifar10
+dataset_path  : dataset
+img_size      : 32
+input_channel : 3
+num_classes   : 10
+normalize:
+    mean      : [0.49139967861519745, 0.4821584083946076, 0.44653091444546616]
+    std       : [0.2470322324632823, 0.24348512800005553, 0.2615878417279641]
+
+# Non common params
+download      : true
+num_train     : 45000
+

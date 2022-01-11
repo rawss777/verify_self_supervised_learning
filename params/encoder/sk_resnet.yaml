@@ -1,0 +1,32 @@
+name: SKResNetEncoder
+root: backborn.sk_resnet
+variant: sk_resnet50
+
+params:
+  wide_scale: 1
+  drop_rate: 0.
+
+sk_resnet10:
+  block: BasicBlock
+  num_blocks: [1, 1, 1, 1]
+
+sk_resnet18:
+  block: BasicBlock
+  num_blocks: [2, 2, 2, 2]
+
+sk_resnet34:
+  block: BasicBlock
+  num_blocks: [3, 4, 6, 3]
+
+sk_resnet50:
+  block: Bottleneck
+  num_blocks: [3, 4, 6, 3]
+
+sk_resnet101:
+  block: Bottleneck
+  num_blocks: [3, 4, 23, 3]
+
+sk_resnet152:
+  block: Bottleneck
+  num_blocks: [3, 8, 36, 3]
+

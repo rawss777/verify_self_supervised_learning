@@ -1,0 +1,51 @@
+multi_view_list: [base]
+
+###
+#公式albumentations: https://albumentations.ai/
+#わかりやすい記事: https://qiita.com/kurilab/items/b69e1be8d0224ae139ad
+###
+views:
+    base:
+        random_resize_crop:
+            use: true
+            root: torchvision.transforms
+            name: RandomResizedCrop
+            params:
+                size: 32
+                scale: [ 0.08, 1.0 ]
+                ratio: [ 0.75, 1.333 ]
+
+            color_jitter:
+                use: true
+                root: util_augments
+                name: RandomColorJitter
+                params:
+                    brightness: 0.8
+                    contrast: 0.8
+                    saturation: 0.8
+                    hue: 0.2
+                    p: 0.8
+
+            gary_scale:
+                use: true
+                root: torchvision.transforms
+                name: RandomGrayscale
+                params:
+                    p: 0.2
+
+            gaussian_blur:
+                use: false
+                root: util_augments
+                name: RandomGaussianBlur
+                params:
+                    sigma: [ 0.1, 0.2 ]
+                    p: 0.2
+
+            horizontal_flip:
+                use: true
+                root: torchvision.transforms
+                name: RandomHorizontalFlip
+                params:
+                    p: 0.5
+
+

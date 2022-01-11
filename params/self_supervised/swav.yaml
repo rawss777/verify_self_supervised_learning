@@ -1,0 +1,26 @@
+name: SwAV
+root: swav
+
+params:
+  # projection params
+  proj_params:
+    num_layer: 2
+    hidden_dim: 512
+    output_dim: 128
+    hidden_bn: true
+    output_bn: true
+  # memory queue
+  memory_queue_params:
+    use: false
+    memory_size: 4096
+    dequeue_size: 4096
+  # prototype params
+  num_prototype_list: [10, 30, 50]
+  # sinkhorn knopp params
+  sinkhorn_knopp_params:
+    num_iters: 3
+    epsilon: 0.05
+    use_double_prec: true
+    hard_assignment: false
+
+

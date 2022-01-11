@@ -1,0 +1,5 @@
+name : CosineSimilarityLoss
+root : cosine_similarity_loss
+
+params:
+  t_scale: 0.07
