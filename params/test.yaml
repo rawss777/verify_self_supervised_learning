@@ -1,18 +1,18 @@
 # Training config ()
 
 experiment_params:
-  output_dir        : output/cifar10  # local or remote
+  output_dir        : output/sample  # local or remote
   debug_mode        : true
   seed              :                 # (default: None)
-  fine_tune_run_name:
-  run_name          :
+  fine_tune_run_name: sample
+  run_name          : sample
 
 test_params:
   # common params
   gpu_id       : 0
   multi_cpu_num: 8
   batch_size   : 128
-  model_state  :
+  model_state  : best
 
 
 hydra:

@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 
 class CosineSimilarityLoss(object):
-    def __init__(self, n_views, device, **kwargs):
+    def __init__(self, **kwargs):
         super(CosineSimilarityLoss).__init__()
 
     def __call__(self, feat1, feat2):

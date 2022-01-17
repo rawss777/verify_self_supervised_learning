@@ -21,12 +21,8 @@ class Trainer(object):
         use_cuda = self.train_params.gpu_id > -1 and torch.cuda.is_available()
         self.device = torch.device(f'cuda:{self.train_params.gpu_id}' if use_cuda else "cpu")
 
-        # define loss
-        view_num = len(cfg.augmentation.multi_view_list)
-        self.criterion = loss_fn.get_ssl_loss_fn(view_num, self.device, cfg.loss_fn)
-
         # define networks
-        self.model = networks.get_network(self.criterion, self.device, cfg.encoder, cfg.self_supervised, cfg.dataset)
+        self.model = networks.get_network(self.device, cfg.encoder, cfg.self_supervised, cfg.dataset)
         self.model.to(self.device)  # model to device
 
         # define optimizer
@@ -34,16 +30,9 @@ class Trainer(object):
         self.scheduler = lr_scheduler.get_lr_scheduler(self.optimizer, self.train_params.epoch_num, cfg.lr_sheduler)
         self.scaler = amp.GradScaler(enabled=self.train_params.use_amp)
 
-        # load resume
-        if self.train_params.resume.use:
-            resume_mlflow_logger = utils.MlflowLogger('train', wd_root_dict=self.mlflow_logger.wd_root_dict)
-            resume_mlflow_logger.set_run_id_from_run_name(self.train_params.resume.run_name)
-            self.__load_checkpoints(resume_mlflow_logger, f'checkpoints_{self.train_params.resume.checkpoints}')
-            utils.transfer_metrics_data(resume_mlflow_logger, self.mlflow_logger, self.train_params.resume.checkpoints)
-
         # define data_loader
         self.train_loader, self.val_loader, _ = dataset.get_dataloaders(
-            self.train_params.batch_size, self.train_params.multi_cpu_num, cfg.dataset, cfg.augmentation)
+            self.train_params.batch_size, self.train_params.multi_cpu_num, cfg.dataset, cfg.self_supervised.aug_params)
         assert self.val_loader is not None, "The number of validation image must be more than 0"
 
         # log batch sample
@@ -52,8 +41,15 @@ class Trainer(object):
         self.__log_batch_multi_image(self.train_loader, state=f'{run_name}/train', is_multi_img=True)
         self.__log_batch_multi_image(self.val_loader, state=f'{run_name}/validation', is_multi_img=False)
 
+        # load resume
+        if self.train_params.resume.use:
+            resume_mlflow_logger = utils.MlflowLogger('train', wd_root_dict=self.mlflow_logger.wd_root_dict)
+            resume_mlflow_logger.set_run_id_from_run_name(self.train_params.resume.run_name)
+            self.__load_checkpoints(resume_mlflow_logger, f'checkpoints_{self.train_params.resume.checkpoints}')
+            utils.transfer_metrics_data(resume_mlflow_logger, self.mlflow_logger, self.train_params.resume.checkpoints)
+
     def run(self):
-        self.on_train_start()  # before training process each epochs
+        self.on_train_start()  # before training process
 
         for n_epoch in range(self.start_epoch, self.train_params.epoch_num+1):
             # train
@@ -88,15 +84,22 @@ class Trainer(object):
                     loss = self.model(multi_img_list, idx_list)
 
                 # update parameter
-                self.optimizer.zero_grad()
-                self.scaler.scale(loss).backward()
-                self.scaler.step(self.optimizer)
-                self.scaler.update()
+                if (loss is not None) and (torch.is_tensor(loss)):
+                    self.optimizer.zero_grad()
+                    self.scaler.scale(loss).backward()
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
+                    v_loss = loss.item()
+                else:
+                    v_loss = 0.
 
                 # logging
                 batch_size = multi_img_list[0].shape[0]
-                loss_logger.update(loss.item(), batch_size)
+                loss_logger.update(v_loss, batch_size)
                 tepoch.set_postfix(avg_loss=loss_logger.avg)  # tqdm
+
+                # post process
+                self.on_train_iter_end()
         self.scheduler.step()
 
         # summarize log data
@@ -130,10 +133,13 @@ class Trainer(object):
         del feature_stacker
 
     def on_train_start(self):
-        self.model.on_train_start(self.train_loader)
+        self.model.on_train_start(self.train_loader, self.train_params.epoch_num)
 
     def on_train_epoch_start(self, n_epoch):
         self.model.on_train_epoch_start(n_epoch)
+
+    def on_train_iter_end(self):
+        self.model.on_train_iter_end()
 
     def __load_checkpoints(self, mlflow_logger, state):
         model = mlflow_logger.load_torch_model(state)

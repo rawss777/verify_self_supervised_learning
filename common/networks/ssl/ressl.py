@@ -5,25 +5,19 @@ from .base_ssl import BaseSSL
 from .util_modules import MLP, EMA, EMAN, QueueMemory
 
 
-class MoCo(BaseSSL):
+class ReSSL(BaseSSL):
     def __init__(self, encoder: nn.Module, device: str, loss_params: dict,
-                 proj_params: dict, m_factor_params: dict, memory_queue_params: dict, split_bn: dict, use_eman: bool):
+                 proj_params: dict, m_factor: dict, memory_queue_params: dict, use_eman: bool):
         # define query encoder, device, criterion
         super().__init__(encoder, device, loss_params)
 
-        # define query networks
+        # define student networks
         self.projector = MLP(input_dim=encoder.output_dim, **proj_params)
 
-        # define key networks
+        # define teacher networks
         ema_mod = EMAN if use_eman else EMA
-        self.m_encoder = ema_mod(self.encoder, **m_factor_params)
-        self.m_projector = ema_mod(self.projector, **m_factor_params)
-
-        # replace key networks to split_bn
-        self.use_split_bn = split_bn.use
-        if self.use_split_bn:
-            self.replace_bn_to_split_bn(self.m_encoder, split_bn.num_split)
-            self.replace_bn_to_split_bn(self.m_projector, split_bn.num_split)
+        self.m_encoder = ema_mod(self.encoder, **m_factor)
+        self.m_projector = ema_mod(self.projector, **m_factor)
 
         # define memory queue
         self.memory_bank = QueueMemory(memory_queue_params["memory_size"])
@@ -43,26 +37,17 @@ class MoCo(BaseSSL):
         # get query projection
         proj_q = self.projector(self.encoder(xq))
 
+        # get key projection
         with torch.no_grad():
-            # batch shuffle
-            if self.use_split_bn:
-                xk, unshuffled_idx = self.batch_shuffle(xk)
-
-            # get key projection
             proj_k = self.m_projector(self.m_encoder(xk))
 
-            # batch revert
-            if self.use_split_bn:
-                proj_k = self.batch_revert(proj_k, unshuffled_idx)
-
-        # enqueue and dequeue negative sample
-        proj_only_neg = None
-        if len(self.memory_bank) > self.dequeue_size:
-            proj_only_neg = self.memory_bank.dequeue(self.dequeue_size)
-        self.memory_bank.enqueue(proj_k.detach())
-
         # compute loss
-        loss = self.criterion([proj_q, proj_k], negative_feature=proj_only_neg)
+        loss = 0.
+        if len(self.memory_bank) > self.dequeue_size:
+            queue = self.memory_bank.dequeue(self.dequeue_size)
+            loss = self.criterion(proj_q, proj_k, queue)
+        self.memory_bank.enqueue(proj_k.detach().clone())
+
         return loss
 
     def on_train_start(self, train_loader, epoch_num, *args, **kwargs):
@@ -80,4 +65,5 @@ class MoCo(BaseSSL):
         self.cur_iter += 1
         self.m_encoder.update_m_factor(self.cur_iter, self.max_iter)
         self.m_projector.update_m_factor(self.cur_iter, self.max_iter)
+
 

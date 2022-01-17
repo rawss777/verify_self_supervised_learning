@@ -1,1 +1,6 @@
-from .get_loss_fn import get_ssl_loss_fn, get_cls_loss_fn
+from . import info_nce_loss
+from . import cross_entropy_loss
+from . import cosine_similarity_loss
+from . import cross_correlation_loss
+from . import relational_consistency_loss
+

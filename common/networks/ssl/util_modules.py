@@ -1,3 +1,4 @@
+from math import cos, pi
 import numpy as np
 import random
 from copy import deepcopy
@@ -32,20 +33,27 @@ class MLP(nn.Module):
                         (f"act{n}", nn.ReLU(inplace=True))
                     ])
                 input_dim = hidden_dim
-        if output_bn: projector_list.append((f"last_bn", nn.BatchNorm1d(output_dim)))
+        if output_bn:
+            projector_list[-1][-1].bias.requires_grad = False
+            projector_list.append((f"last_bn", nn.BatchNorm1d(output_dim, affine=False)))
 
         self.projector = nn.Sequential(OrderedDict(projector_list))
+        self.output_dim = output_dim
 
     def forward(self, rep):
         return self.projector(rep)
 
 
 class EMA(nn.Module):
-    def __init__(self, online_network: nn.Module, m_factor: float):
+    def __init__(self, online_network: nn.Module, upper_bounds: float, lower_bounds: float):
         super(EMA, self).__init__()
-        assert (0. <= m_factor) and (m_factor <= 1.), 'm_factor must be (0.0, 1.0) '
+        self.upper_m_factor = upper_bounds
+        self.lower_m_factor = lower_bounds
 
-        self.m_factor = m_factor
+        assert (0. <= self.upper_m_factor) and (self.upper_m_factor <= 1.), 'upper_m_factor must be (0.0, 1.0) '
+        assert (0. <= self.lower_m_factor) and (self.lower_m_factor <= 1.), 'lower_m_factor must be (0.0, 1.0) '
+
+        self.cur_m_factor = self.upper_m_factor
         self.online_network = online_network
         self.target_network = deepcopy(online_network)
         for param in self.target_network.parameters():
@@ -58,17 +66,24 @@ class EMA(nn.Module):
     @torch.no_grad()
     def update(self):
         for param_t, param_o in zip(self.target_network.parameters(), self.online_network.parameters()):
-            param_t.data = param_t.data * self.m_factor + param_o.data * (1. - self.m_factor)
+            param_t.data = param_t.data * self.cur_m_factor + param_o.data * (1. - self.cur_m_factor)
+
+    def update_m_factor(self, cur_iter, max_iter):
+        self.cur_m_factor = self.lower_m_factor + (self.upper_m_factor - self.lower_m_factor) * \
+                            (cos(pi * cur_iter / float(max_iter)) + 1) / 2.0
+        assert (0. <= self.cur_m_factor) and (self.cur_m_factor <= 1.), 'm_factor must be (0.0, 1.0) '
 
 
 class EMAN(EMA):
-    def __init__(self, online_network: nn.Module, m_factor: float):
+    def __init__(self, online_network: nn.Module, m_factor: dict):
         super().__init__(online_network, m_factor)
 
+    @torch.no_grad()
     def forward(self, x):
         self.target_network.eval()
-        return self.target_network(x)
+        return super().forward(x)
 
+    @torch.no_grad()
     def update(self):
         # update parameter
         super().update()
@@ -77,7 +92,7 @@ class EMAN(EMA):
             if 'num_batches_tracked' in key_o:
                 param_t.data = param_o.data
             else:
-                param_t.data = param_t.data * self.m_factor + param_o.data * (1. - self.m_factor)
+                param_t.data = param_t.data * self.cur_m_factor + param_o.data * (1. - self.cur_m_factor)
 
 
 class QueueMemory(object):
@@ -254,11 +269,13 @@ class KmeansClustering(object):
         self.num_iter = num_iter
 
     @torch.no_grad()
-    def fit(self, projection_list: torch.Tensor, index_list: torch.Tensor):
+    def fit(self, projection_list: torch.Tensor, index_list: torch.Tensor, pre_centroids_list: list):
         """
         :param projection_list: List of one global_view's projection torch.tensor.
                                 Each projection shape is (num_sample, proj_dim)
         :param index_list     : Original training sample indices seen from projection vector indices
+        :param pre_centroids_list     : Original training sample indices seen from projection vector indices
+
         :return:
             centroids_list:   List of prototype(cluster) centroids.
                               Length is self.num_prototype_list.
@@ -270,20 +287,22 @@ class KmeansClustering(object):
         assignments_list = -torch.ones(len(self.num_prototype_list), self.dataset_size).long().to(self.device)
         for target_proto_idx, num_proto in enumerate(self.num_prototype_list):
             target_centroids, target_assignments = self.__compute_centroids_and_assignments(projection_list[n_view],
-                                                                                            num_proto)
+                                                                                            num_proto,
+                                                                                            pre_centroids_list[target_proto_idx])
             centroids_list.append(target_centroids)
             assignments_list[target_proto_idx][index_list] = target_assignments
             n_view = (n_view + 1) % self.num_global_view  # update n_view
         return centroids_list, assignments_list
 
     @torch.no_grad()
-    def __compute_centroids_and_assignments(self, projection: torch.Tensor, num_proto: int):
+    def __compute_centroids_and_assignments(self, projection: torch.Tensor, num_proto: int, centroids: torch.Tensor):
         projection = F.normalize(projection, dim=1, p=2)  # normalize projection
+        centroids = F.normalize(centroids, dim=1, p=2)  # normalize centroids
 
-        # centroids = torch.empty(num_proto, self.proj_dim).to(self.device, non_blocking=True)
-        random_idx = torch.randperm(len(projection))[:num_proto]
-        assert len(random_idx) >= num_proto, "please reduce the number of centroids"
-        centroids = projection[random_idx]
+        # # centroids = torch.empty(num_proto, self.proj_dim).to(self.device, non_blocking=True)
+        # random_idx = torch.randperm(len(projection))[:num_proto]
+        # assert len(random_idx) >= num_proto, "please reduce the number of centroids"
+        # centroids = projection[random_idx]
 
         for n_iter in range(self.num_iter + 1):
             # # # E step (update assignments)

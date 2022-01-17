@@ -30,7 +30,7 @@ class Tester(object):
         train_hydra_config_root = f'{train_mlflow_logger.get_artifact_root()}/fine_tune_hydra_config'
         train_config = OmegaConf.load(f'{train_hydra_config_root}/.hydra/config.yaml')
         _, _, self.test_loader = dataset.get_dataloaders(
-            self.test_params.batch_size, self.test_params.multi_cpu_num, train_config.dataset, train_config.augmentation)
+            self.test_params.batch_size, self.test_params.multi_cpu_num, train_config.dataset, train_config.aug_params)
 
         # save train config to test run
         self.mlflow_logger.log_artifacts(train_hydra_config_root, save_dir='fine_tune_hydra_config')

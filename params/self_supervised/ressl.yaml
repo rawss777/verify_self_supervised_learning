@@ -1,5 +1,5 @@
-name: DeepClusterV2
-root: deepclusterv2
+name: ReSSL
+root: ssl.ressl
 
 # # # ssl params
 ssl_params:
@@ -8,32 +8,32 @@ ssl_params:
     num_layer: 2
     hidden_dim: 512
     output_dim: 128
-    hidden_bn: true
+    hidden_bn: false
     output_bn: false
-  # multi prototype list
-  num_prototype_list: [10, 30, 50]
-  # kmeans params
-  kmeans_params:
-    num_iter: 50
+  # momentum
+  m_factor:
+    upper_bounds: 0.9
+    lower_bounds: 0.9999
+  # memory queue
+  memory_queue_params:
+    memory_size: 65536
+    dequeue_size: 4096
+  # EMA to EMAN
+  use_eman: false
 
 
 # # # loss params
 loss_params:
-  name : WithTempCrossEntropyLoss
-  root : loss_fn.cross_entropy_loss
+  name : RelationalConsistencyLoss
+  root : loss_fn.relational_consistency_loss
   params:
-    t_scale: 1.
-    weight: null
-    size_average: null
-    ignore_index: -1
-    reduce: null
-    reduction: mean
-    label_smoothing: 0.
+    t_query: 0.1
+    t_key: 0.04
 
 
 # # # augmentation params
 aug_params:
-  multi_view_list: [base, base, crop, crop, crop, crop]
+  multi_view_list: [base, weak]
   # MoCo (query and key) augmentations
   base:
     random_resize_crop:
@@ -78,41 +78,15 @@ aug_params:
       params:
         p: 0.5
 
-  crop:
+  weak:
     random_resize_crop:
       use: true
       root: torchvision.transforms
       name: RandomResizedCrop
       params:
-        size_factor: 0.5      # output image size is dataset.img_size * size_factor
-        scale: [ 0.08, 0.25 ]
+        size_factor: 1.      # output image size is dataset.img_size * size_factor
+        scale: [ 0.25, 1.0 ]
         ratio: [ 0.75, 1.333 ]
-
-    color_jitter:
-      use: true
-      root: util_augments
-      name: RandomColorJitter
-      params:
-        brightness: 0.4
-        contrast: 0.4
-        saturation: 0.4
-        hue: 0.1
-        p: 0.8
-
-    gary_scale:
-      use: true
-      root: torchvision.transforms
-      name: RandomGrayscale
-      params:
-        p: 0.2
-
-    gaussian_blur:
-      use: false
-      root: util_augments
-      name: RandomGaussianBlur
-      params:
-        sigma: [ 0.1, 0.2 ]
-        p: 0.2
 
     horizontal_flip:
       use: true

@@ -7,10 +7,10 @@ from .util_modules import MLP, CosineSimilarityLayer, QueueMemory, SinkhornKnopp
 
 
 class SwAV(BaseSSL):
-    def __init__(self, encoder: nn.Module, criterion: nn.Module, device: str,
+    def __init__(self, encoder: nn.Module, device: str, loss_params: dict,
                  proj_params: dict, memory_queue_params: dict, num_prototype_list: list, sinkhorn_knopp_params: dict):
-        # define encoder, criterion, device
-        super().__init__(encoder, criterion, device)
+        # define query encoder, device, criterion
+        super().__init__(encoder, device, loss_params)
 
         self.num_global_view = 2
         assert self.num_global_view == 2, f"num_global_view must be 2, but set to {num_global_view}"

@@ -1,24 +1,21 @@
 # Training config ()
 defaults:
   # "cifar10" or "stl10"
-  - dataset        : cifar10
+  - dataset: cifar10
   # "sgd" or "adam" or "radam" or "lars"
-  - optimizer      : adam
+  - optimizer: sgd
   # "cosine" or "multi_step" or "cosine_annealing" or "none"
-  - lr_sheduler    : cosine
+  - lr_sheduler: cosine
   # "resnet" or "sk_resnet"
-  - encoder        : resnet
-  # "moco" or "simclr" or "swav" or "byol" or "simsiam" or "deepclusterv2"
-  - self_supervised: deepclusterv2
-  - augmentation   : deepclusterv2
-  # "info_nce_loss" or "soft_cross_entropy_loss" or "with_temp_cross_entropy_loss" or "cosine_similarity_loss"
-  - loss_fn        : cross_entropy_loss
+  - encoder: resnet
+  # "moco" or "simclr" or "swav" or "byol" or "simsiam" or "deepclusterv2" or "barlow_twins" or "ressl"
+  - self_supervised: ressl
 
 experiment_params:
   debug_mode: true
-  run_name  :
+  run_name  : sample9
   seed      : 0              # (default: None)
-  output_dir: output/cifar10
+  output_dir: output/sample
 
 train_params:
   # common params
@@ -30,8 +27,8 @@ train_params:
 
   log_interval:
     train      : 1    # epoch
-    validation : 50   # epoch
-    checkpoints: 100  # epoch
+    validation : 10   # epoch
+    checkpoints: 10   # epoch
 
   resume:               # 学習を再開したい場合は，下記を指定
     use        : false  # falseの場合は再開しない

@@ -1,6 +1,6 @@
 name : MultiStepLR
 root : torch.optim.lr_scheduler
 params:
-  milestones : [150, 250]  #  減衰させたいstepのリスト
+  milestones : [50, 100]  #  減衰させたいstepのリスト
   gamma      : 0.1 # 減衰率
   last_epoch : -1

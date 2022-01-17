@@ -1,40 +1,24 @@
-name: BYOL
-root: byol
+name: BarlowTwins
+root: barlow_twins
 
 # # # ssl params
 ssl_params:
   # projection params
   proj_params:
-    num_layer: 2
-    hidden_dim: 512
+    num_layer: 3
+    hidden_dim: 2048
     output_dim: 128
     hidden_bn: true
     output_bn: false
-  # prediction params
-  pred_params:
-    num_layer: 2
-    hidden_dim: 512
-    output_dim: 128
-    hidden_bn: true
-    output_bn: false
-  # momentum
-  m_factor:
-    upper_bounds: 0.99
-    lower_bounds: 0.9999
-  # batch norm to split batch norm
-  split_bn:
-    use: true
-    num_split: 8
-  # EMA to EMAN
-  use_eman: false
 
 
 # # # loss params
 loss_params:
-  name : CosineSimilarityLoss
-  root : loss_fn.cosine_similarity_loss
+  name : CrossCorrelationLoss
+  root : loss_fn.cross_correlation_loss
   params:
-    t_scale: 0.07
+    lamb: 5e-3
+    scale_loss: 0.025
 
 
 # # # augmentation params
@@ -83,4 +67,3 @@ aug_params:
       name: RandomHorizontalFlip
       params:
         p: 0.5
-

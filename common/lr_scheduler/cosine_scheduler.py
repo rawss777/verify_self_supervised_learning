@@ -4,17 +4,16 @@ from torch.optim.lr_scheduler import LambdaLR
 from torch.optim.lr_scheduler import _LRScheduler
 
 
-def CosineScheduler(optimizer, training_steps, warmup_steps, wait_steps=0, cycles=0.5, last_epoch=-1):
+def CosineScheduler(optimizer, training_steps, warmup_steps, lower_bounds_rate, last_epoch=-1):
     def lr_lambda(current_step):
-        if current_step < wait_steps:
-            return 0.0
+        if current_step < warmup_steps:
+            return float(current_step) / float(max(1, warmup_steps))
 
-        if current_step < warmup_steps + wait_steps:
-            return float(current_step) / float(max(1, warmup_steps + wait_steps))
-
-        progress = float(current_step - warmup_steps - wait_steps) / \
-                   float(max(1, training_steps - warmup_steps - wait_steps))
-        return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(cycles) * 2.0 * progress)))
+        progress = float(current_step - warmup_steps) / \
+                   float(max(1, training_steps - warmup_steps))  # 0.0~1.0
+        curve = 0.5 * (1.0 + math.cos(math.pi * progress))
+        curve = (1 - lower_bounds_rate) * curve + lower_bounds_rate
+        return max(0.0, curve)
 
     return LambdaLR(optimizer, lr_lambda, last_epoch)
 

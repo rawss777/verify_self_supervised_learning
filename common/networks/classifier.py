@@ -5,10 +5,11 @@ from .ssl.util_modules import SplitBatchNorm1d, SplitBatchNorm2d
 
 
 class WrapperClassifier(nn.Module):
-    def __init__(self, encoder: nn.Module, num_class: int, fix_encoder, num_layer: int = 1, hidden_dim: int = None):
+    def __init__(self, encoder: nn.Module, num_class: int, fix_encoder: bool, num_layer: int = 1, hidden_dim: int = None):
         super(WrapperClassifier, self).__init__()
         self.encoder = encoder
         self.__replace_split_bn_to_bn(self.encoder)
+        self.fix_encoder = fix_encoder
         for p in self.encoder.parameters():
             p.requires_grad = not fix_encoder
             # nn.init.normal_(p, 0.0, 1.0)  # initial random weight
@@ -31,6 +32,7 @@ class WrapperClassifier(nn.Module):
         self.classifier = nn.Sequential(OrderedDict(projector_list))
 
     def forward(self, x):
+        if self.fix_encoder: self.encoder.eval()
         return self.classifier(self.encoder(x))
 
     @staticmethod

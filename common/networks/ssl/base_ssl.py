@@ -1,15 +1,23 @@
 import torch
 from torch import nn
 
+from ... import loss_fn
 from .util_modules import SplitBatchNorm1d, SplitBatchNorm2d
 
 
 class BaseSSL(nn.Module):
-    def __init__(self, encoder: nn.Module, criterion: nn.Module, device: str):
+    def __init__(self, encoder: nn.Module, device: str, loss_params: dict):
         super(BaseSSL, self).__init__()
         self.device = device
         self.encoder = encoder
-        self.criterion = criterion
+        self.criterion = self.get_criterion_fn(loss_params)
+
+    @staticmethod
+    def get_criterion_fn(loss_params):
+        criterion_class = getattr(eval(loss_params["root"]), loss_params["name"])
+        params = {} if loss_params["params"] is None else loss_params["params"]
+        criterion_fn = criterion_class(**params)
+        return criterion_fn
 
     def forward(self, multi_img_list: list, *args, **kwargs):
         raise NotImplementedError('Must define "forward" method')
@@ -18,6 +26,9 @@ class BaseSSL(nn.Module):
         pass
 
     def on_train_epoch_start(self, *args, **kwargs):
+        pass
+
+    def on_train_iter_end(self, *args, **kwargs):
         pass
 
     @torch.no_grad()

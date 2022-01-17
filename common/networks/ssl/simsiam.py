@@ -6,10 +6,10 @@ from .util_modules import MLP, EMA, EMAN
 
 
 class SimSiam(BaseSSL):
-    def __init__(self, encoder: nn.Module, criterion: nn.Module, device: str,
+    def __init__(self, encoder: nn.Module, device: str, loss_params: dict,
                  proj_params: dict, pred_params: dict):
-        # define online encoder, criterion, device
-        super().__init__(encoder, criterion, device)
+        # define query encoder, device, criterion
+        super().__init__(encoder, device, loss_params)
 
         # define networks
         self.projector = MLP(input_dim=encoder.output_dim, **proj_params)

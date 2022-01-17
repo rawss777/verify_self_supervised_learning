@@ -23,7 +23,8 @@ class FineTuner(object):
         self.device = torch.device(f'cuda:{self.fine_tune_params.gpu_id}' if use_cuda else "cpu")
 
         # define loss
-        self.criterion = loss_fn.get_cls_loss_fn(cfg.loss_fn)
+        criterion_class = getattr(eval(cfg.loss_params.root), cfg.loss_params.name)
+        self.criterion = criterion_class(**cfg.loss_params.params)
 
         # define metrics
         self.metrics = metrics.get_metrics('accuracy')
@@ -31,8 +32,7 @@ class FineTuner(object):
         # define networks
         pretrain_model = pretrain_mlflow_logger.load_torch_model(self.fine_tune_params.model_state)
         self.model = networks.WrapperClassifier(pretrain_model.encoder, cfg.dataset.num_classes,
-                                                fix_encoder=self.fine_tune_params.fix_encoder,
-                                                num_layer=2, hidden_dim=512)
+                                                fix_encoder=self.fine_tune_params.fix_encoder)
         self.model.to(self.device)  # model to device
 
         # define optimizer
@@ -49,7 +49,7 @@ class FineTuner(object):
 
         # define data_loader
         self.train_loader, self.val_loader, _ = dataset.get_dataloaders(
-            self.fine_tune_params.batch_size, self.fine_tune_params.multi_cpu_num, cfg.dataset, cfg.augmentation)
+            self.fine_tune_params.batch_size, self.fine_tune_params.multi_cpu_num, cfg.dataset, cfg.aug_params)
         assert self.val_loader is not None, "The number of validation image must be more than 0"
 
         # # # log tensorboard
@@ -69,6 +69,8 @@ class FineTuner(object):
             # validation
             if n_epoch % self.fine_tune_params.log_interval.validation == 0:
                 val_metrics_dict = self.validation(n_epoch)
+                self.mlflow_logger.log_metrics(val_metrics_dict, n_epoch)
+                utils.log_metrics_for_tb(self.tb_logger, val_metrics_dict, n_epoch)
                 if val_metrics_dict['Accuracy/Validation'] > self.best_score:
                     self.__save_checkpoints('best', n_epoch)
                     self.best_score = val_metrics_dict['Accuracy/Validation']

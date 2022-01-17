@@ -1,7 +1,8 @@
 name: MoCo
 root: moco
 
-params:
+# # # ssl params
+ssl_params:
   # projection params
   proj_params:
     num_layer: 2
@@ -10,14 +11,73 @@ params:
     hidden_bn: false
     output_bn: false
   # momentum
-  m_factor: 0.99
+  m_factor_params:
+    upper_bounds: 0.99
+    lower_bounds: 0.9999
   # memory queue
   memory_queue_params:
     memory_size: 65536
     dequeue_size: 4096
   # batch norm to split batch norm
   split_bn:
-    use: false
+    use: true
     num_split: 16
   # EMA to EMAN
   use_eman: false
+
+
+# # # loss params
+loss_params:
+  name: InfoNCELoss
+  root: loss_fn.info_nce_loss
+  params:
+    t_scale: 0.07
+
+
+# # # augmentation params
+aug_params:
+  multi_view_list: [base, base]
+  # MoCo (query and key) augmentations
+  base:
+    random_resize_crop:
+      use: true
+      root: torchvision.transforms
+      name: RandomResizedCrop
+      params:
+        size_factor: 1.      # output image size is dataset.img_size * size_factor
+        scale: [ 0.25, 1.0 ]
+        ratio: [ 0.75, 1.333 ]
+
+    color_jitter:
+      use: true
+      root: util_augments
+      name: RandomColorJitter
+      params:
+        brightness: 0.4
+        contrast: 0.4
+        saturation: 0.4
+        hue: 0.1
+        p: 0.8
+
+    gary_scale:
+      use: true
+      root: torchvision.transforms
+      name: RandomGrayscale
+      params:
+        p: 0.2
+
+    gaussian_blur:
+      use: false
+      root: util_augments
+      name: RandomGaussianBlur
+      params:
+        sigma: [ 0.1, 0.2 ]
+        p: 0.2
+
+    horizontal_flip:
+      use: true
+      root: torchvision.transforms
+      name: RandomHorizontalFlip
+      params:
+        p: 0.5
+

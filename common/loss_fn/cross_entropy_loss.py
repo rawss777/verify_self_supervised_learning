@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 
 class SoftCrossEntropyLoss(nn.Module):
-    def __init__(self, n_views, device, t_scale):
+    def __init__(self, t_scale, **kwargs):
         super(SoftCrossEntropyLoss, self).__init__()
         self.t_scale = t_scale
 
@@ -14,7 +14,7 @@ class SoftCrossEntropyLoss(nn.Module):
 
 
 class WithTempCrossEntropyLoss(nn.CrossEntropyLoss):
-    def __init__(self, n_views, device, t_scale, **kwargs):
+    def __init__(self, t_scale, **kwargs):
         super(WithTempCrossEntropyLoss, self).__init__(**kwargs)
         self.t_scale = t_scale
 

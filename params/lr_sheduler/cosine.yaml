@@ -1,7 +1,6 @@
 name : CosineScheduler
 root : cosine_scheduler
 params:
-  warmup_steps : 5
-  wait_steps   : 0
-  cycles       : 0.5
+  warmup_steps : 10
+  lower_bounds_rate: 0.01
   last_epoch   : -1

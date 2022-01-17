@@ -6,21 +6,17 @@ defaults:
   - optimizer      : adam
   # "cosine" or "multi_step" or "cosine_annealing" or "none"
   - lr_sheduler    : cosine
-  # "base"
-  - augmentation   : base
-  # "cross_entropy_loss"
-  - loss_fn        : cross_entropy_loss
 
 experiment_params:
   debug_mode       : true
-  output_dir       : output/cifar10
-  pretrain_run_name:
-  run_name         :
+  output_dir       : output/sample
+  pretrain_run_name: sample9
+  run_name         : sample9_fine-tune
 
 fine_tune_params:
   # common params
-  model_state  :
-  fix_encoder  : true
+  model_state  : last
+  fix_encoder  : false
   gpu_id       : 0
   multi_cpu_num: 32
   epoch_num    : 100
@@ -40,3 +36,64 @@ fine_tune_params:
 hydra:
   run:
     dir: ./${experiment_params.output_dir}/hydra
+
+
+# # # loss params
+loss_params:
+  name : CrossEntropyLoss
+  root : torch.nn
+  params:
+    weight: null
+    size_average: null
+    ignore_index: -1
+    reduce: null
+    reduction: mean
+    label_smoothing: 0.
+
+
+# # # augmentation params
+aug_params:
+  multi_view_list: [base]
+  # MoCo (query and key) augmentations
+  base:
+    random_resize_crop:
+      use: true
+      root: torchvision.transforms
+      name: RandomResizedCrop
+      params:
+        size_factor: 1.      # output image size is dataset.img_size * size_factor
+        scale: [ 0.25, 1.0 ]
+        ratio: [ 0.75, 1.333 ]
+
+    color_jitter:
+      use: true
+      root: util_augments
+      name: RandomColorJitter
+      params:
+        brightness: 0.4
+        contrast: 0.4
+        saturation: 0.4
+        hue: 0.1
+        p: 0.8
+
+    gary_scale:
+      use: true
+      root: torchvision.transforms
+      name: RandomGrayscale
+      params:
+        p: 0.2
+
+    gaussian_blur:
+      use: false
+      root: util_augments
+      name: RandomGaussianBlur
+      params:
+        sigma: [ 0.1, 0.2 ]
+        p: 0.2
+
+    horizontal_flip:
+      use: true
+      root: torchvision.transforms
+      name: RandomHorizontalFlip
+      params:
+        p: 0.5
